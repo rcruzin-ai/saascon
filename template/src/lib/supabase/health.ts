@@ -1,37 +1,32 @@
-// Server-side Supabase health probe. Used by the home page so a fresh clone
-// shows DB connectivity status immediately on first load.
+// Server-side DB health probe. Used by the home page so a fresh clone shows
+// connectivity status immediately on first load. Works against either backend
+// (Supabase or local SQLite) — the routing happens in src/lib/db/index.ts.
 //
-// Three states:
+// States:
 //   - "connected": probe succeeded (env wired + schema present)
-//   - "schema-missing": Supabase responded but the `examples` table is gone,
-//     which is the expected state once a cloned project replaces the example
-//     migration with real entities. Still a green light for "Supabase wired".
+//   - "schema-missing": DB responded but the `examples` table is gone, which
+//     is the expected state once a cloned project replaces the example
+//     migration with real entities. Still a green light for "DB wired".
 //   - "unreachable": env missing or network/auth error
-import { getServerSupabase } from "./server";
+import { getDb, resolveDriver, type DbDriver } from "../db";
 
 export type SupabaseHealth =
-  | { status: "connected"; rowCount: number }
-  | { status: "schema-missing"; reason: string }
-  | { status: "unreachable"; reason: string };
+  | { status: "connected"; driver: DbDriver; rowCount: number }
+  | { status: "schema-missing"; driver: DbDriver; reason: string }
+  | { status: "unreachable"; driver: DbDriver; reason: string };
 
 export async function checkSupabaseHealth(): Promise<SupabaseHealth> {
-  let supabase;
+  const driver = resolveDriver();
+  let db;
   try {
-    supabase = getServerSupabase();
+    db = getDb();
   } catch (e) {
-    return { status: "unreachable", reason: (e as Error).message };
+    return { status: "unreachable", driver, reason: (e as Error).message };
   }
 
-  const { count, error } = await supabase
-    .from("examples")
-    .select("*", { count: "exact", head: true });
-
-  if (error) {
-    if (error.code === "PGRST205" || error.message.includes("Could not find the table")) {
-      return { status: "schema-missing", reason: error.message };
-    }
-    return { status: "unreachable", reason: error.message };
-  }
-
-  return { status: "connected", rowCount: count ?? 0 };
+  const result = await db.countRows("examples");
+  if ("count" in result) return { status: "connected", driver, rowCount: result.count };
+  if ("missing" in result)
+    return { status: "schema-missing", driver, reason: "examples table not found" };
+  return { status: "unreachable", driver, reason: result.error };
 }

@@ -23,15 +23,33 @@ A pre-wired Next.js + Supabase + Tailwind v4 starter for a single B2C SaaS produ
 |---|---|
 | Framework | Next.js 15 (App Router), React 19, TypeScript strict |
 | UI | Tailwind v4 (CSS-first; `@import "tailwindcss"`), no component library |
-| Database | Supabase Postgres, RLS enforced, anon key for browser, service-role server-only |
+| Database | **Two modes** — see §2a |
 | Auth | **None by default.** Add Supabase Auth per project if needed. |
-| Hosting | Vercel (Root Directory = `template`) |
+| Hosting | Vercel (Root Directory = `template`) — only required for cloud mode |
 | Package manager | npm |
 | Lint | `next lint` (default, no Prettier, no Husky) |
 | Tests | None in defaults — add Vitest/Playwright per project when justified |
 | Email / payments / queues / i18n | None in defaults |
 
 If a task wants to add anything outside this table, that is a **scope change** — surface it before adding.
+
+## 2a. Database modes — local SQLite vs cloud Supabase
+
+saascon supports two DB backends behind a tiny interface in `template/src/lib/db/`. Mode is auto-detected by env:
+
+| Mode | Trigger | What runs |
+|---|---|---|
+| **Local SQLite (default)** | No `.env`, or `.env` lacks `NEXT_PUBLIC_SUPABASE_URL` | `better-sqlite3` against `./local.db`. Schema + migrations in `db/sqlite/`. Auto-applied on first request. **Zero external services.** |
+| **Cloud Supabase** | `.env` sets `NEXT_PUBLIC_SUPABASE_URL` + the two keys | `@supabase/supabase-js` against the cloud project. Schema + migrations in `db/`. Apply via Supabase SQL Editor. |
+
+**Force a mode:** set `SAASCON_DB_DRIVER=sqlite` or `SAASCON_DB_DRIVER=supabase` in `.env`.
+
+**The contract:**
+- A fresh clone runs locally with `npm install && npm run dev`. No env editing, no Docker, no service signups. The home page badge turns green within 2 seconds.
+- To go to production, fill in `.env` with Supabase credentials and deploy to Vercel. The same page now talks to the cloud DB.
+- Both modes share the same `Db` interface (`countRows`, `selectRecent`, `insertOne`). Add new methods to that interface in **both** adapters when a feature needs them, or import the underlying client directly when you've outgrown the abstraction.
+- **The two schemas are siblings, not generated.** Every Postgres migration in `db/migrations/` should be mirrored in SQLite dialect at `db/sqlite/migrations/` with the same timestamp prefix. Dialect notes in `db/sqlite/migrations/README.md`.
+- **RLS exists only in Supabase mode.** SQLite has no row-level security; local mode is single-user by design.
 
 ## 3. Project layout — what goes where
 
@@ -70,14 +88,14 @@ saascon/
 
 ## 5. Database conventions — non-negotiable
 
-- `db/schema.sql` is **the source of truth**. It always reflects current production schema.
-- Every change is **also** a new file in `db/migrations/` named `YYYYMMDDHHMMSS__<short_snake_name>.sql`.
+- `db/schema.sql` is **the source of truth** for cloud mode. `db/sqlite/schema.sql` is the source of truth for local mode. Both reflect current schema.
+- Every change is **also** a new file in `db/migrations/` named `YYYYMMDDHHMMSS__<short_snake_name>.sql` AND a sibling file with the same name in `db/sqlite/migrations/` in SQLite dialect.
 - **Never edit a merged migration.** If you need to undo, write a new migration that reverses the change.
-- Every table has **RLS enabled.** Every policy is declared inline in `schema.sql` and in the migration that introduces the table.
-- saascon ships no auth — policies grant the `anon` role explicitly when public access is intended.
+- Every table has **RLS enabled** in the Postgres migration. (Local SQLite has no RLS — that's a deliberate parity gap.)
+- saascon ships no auth — Postgres policies grant the `anon` role explicitly when public access is intended.
 - The **service-role key never reaches the browser bundle.** Server-only code paths only.
-- Migrations are applied to Supabase via the SQL Editor (or `supabase db push` if the user has Supabase CLI). After applying, update `schema.sql` to mirror.
-- The `examples` table from the seed migration is a **placeholder.** Delete it when you replace it with real entities — but keep the convention.
+- Postgres migrations are applied to Supabase via the SQL Editor (or `supabase db push` if the user has Supabase CLI). SQLite migrations are auto-applied on first dev-server request — no command needed.
+- The `examples` table from the seed migration is a **placeholder.** Delete it when you replace it with real entities — but keep the convention. When you replace it, remove it from BOTH `db/migrations/` and `db/sqlite/migrations/` with corresponding new migrations.
 
 ## 6. The lifecycle — how to drive a session
 
@@ -192,10 +210,12 @@ If any of these is off, fix it before declaring done.
 
 ## Starter prompt — paste this into your first session
 
-> **Stack:** Next.js 15 + Supabase + Tailwind v4 on Vercel. Stack is locked.
+> **Stack:** Next.js 15 + (SQLite local OR Supabase cloud) + Tailwind v4. Stack is locked.
 >
 > **Today I want to build:** _<one-line product idea here — e.g. "a public link-shortener with click counts" or "a 'today I learned' feed where anyone can post short notes">_
 >
-> **Constraints:** simple and modern, B2C, no auth in v1, ships to Vercel, deploy must work end-to-end before any feature work.
+> **Mode:** _<"local" for offline demo, no external services / "cloud" to ship to Vercel>_.
+>
+> **Constraints:** simple and modern, B2C, no auth in v1. In cloud mode the deploy must work end-to-end before any feature work. In local mode, skip `/ship` — `npm run dev` is the demo.
 >
 > Read TEMPLATE.md, then run `/spec` to draft `template/SPEC.md` for this product. Ask me clarifying questions as needed. Don't start `/plan` until I confirm the spec.
