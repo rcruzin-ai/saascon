@@ -20,31 +20,27 @@ create extension if not exists "pgcrypto";
 -- Tables
 -- ---------------------------------------------------------------------------
 
--- Example placeholder. Replace with your real entities.
---
--- create table entity_a (
---   id          uuid primary key default gen_random_uuid(),
---   name        text not null check (length(name) between 1 and 200),
---   created_at  timestamptz not null default now()
--- );
---
--- alter table entity_a enable row level security;
---
--- create policy "anon read entity_a"
---   on entity_a for select
---   to anon
---   using (true);
---
--- create policy "anon insert entity_a"
---   on entity_a for insert
---   to anon
---   with check (true);
+-- Example placeholder table — replace with your real entities.
+-- Mirrors db/migrations/20260508082135__example_table.sql.
+
+create table if not exists examples (
+  id          uuid primary key default gen_random_uuid(),
+  label       text not null check (length(label) between 1 and 200),
+  created_at  timestamptz not null default now()
+);
+
+alter table examples enable row level security;
+
+create policy "anon read examples"
+  on examples for select
+  to anon
+  using (true);
 
 -- ---------------------------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------------------------
 
--- create index entity_a_created_at_idx on entity_a (created_at desc);
+create index if not exists examples_created_at_idx on examples (created_at desc);
 
 -- ---------------------------------------------------------------------------
 -- Functions / triggers
