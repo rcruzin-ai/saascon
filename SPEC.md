@@ -11,11 +11,17 @@ description: Bare-minimum Next.js + Supabase B2C SaaS demo template, deployed to
 
 ## 1. Objective
 
-A reusable, intentionally-minimal starting point for Next.js + Supabase B2C demo apps that deploy to Vercel. Cloning saascon should give a developer a project that is `dev`-runnable in under two minutes, with the full agent-skills workflow (`/spec → /plan → /build → /test → /review → /ship`) wired in but **no extra tooling weight**.
+**North star: speed up the next iteration.** saascon exists so that the next time the author builds a B2C SaaS demo, the path from idea to deployed app runs through the agent-skills lifecycle (`/spec → /plan → /build → /test → /review → /ship`) without re-deciding stack, re-wiring services, or re-debugging install/deploy. The template proves the entire pipeline — local dev, DB connection, deploy — works end-to-end before any product code is written.
 
-- **Problem:** every demo project re-decides framework version, DB client, and styling, and re-installs the same agent-skills workflow. Heavier starters slow that down with deps the demo doesn't need.
+A reusable, intentionally-minimal starting point for Next.js + Supabase B2C demo apps that deploy to Vercel. Cloning saascon should give a developer a project that is `dev`-runnable in under two minutes, with the full agent-skills workflow wired in but **no extra tooling weight**.
+
+- **Problem:** every demo project re-decides framework version, DB client, and styling; re-wires Supabase + Vercel; re-debugs the same first-deploy issues. Heavier starters slow that down with deps the demo doesn't need.
 - **Users:** the template author (rcruzin) and any future collaborators starting a B2C demo on this stack.
-- **Success metric:** `npm install` finishes in under 30 seconds on a warm cache, `npm run dev` starts cleanly, and the page renders. Total runtime + dev dependency count stays small (target: under 15 deps in `template/package.json`).
+- **Success metrics:**
+  - **Time-to-first-deploy:** from `git clone` → live URL in under 10 minutes.
+  - **`npm install`** finishes in under 30 seconds on a warm cache.
+  - **Total deps** under 15 in `template/package.json`.
+  - **Home page** renders a Supabase health badge so the next builder sees DB connectivity status on first load — no console-digging to confirm the stack works.
 
 ## 2. Scope
 
