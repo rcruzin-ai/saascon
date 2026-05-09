@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { parseDailyTarget } from "./daily-target-parse";
 import { parseQuickAdd } from "./quick-add-parse";
 import {
   deleteEntryById,
@@ -46,15 +47,9 @@ export async function deleteEntry(formData: FormData): Promise<void> {
 }
 
 export async function updateDailyTarget(formData: FormData): Promise<void> {
-  const raw = formData.get("daily_calorie_target");
-  if (typeof raw !== "string" || !/^\d+$/.test(raw.trim())) {
-    redirect("/settings?error=invalid");
-  }
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 500 || n > 10000) {
-    redirect("/settings?error=invalid");
-  }
-  setDailyTarget(n);
+  const parsed = parseDailyTarget(formData.get("daily_calorie_target"));
+  if (!parsed.ok) redirect("/settings?error=invalid");
+  setDailyTarget(parsed.value);
   revalidatePath("/");
   redirect("/settings?ok=1");
 }

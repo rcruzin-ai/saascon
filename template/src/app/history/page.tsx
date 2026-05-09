@@ -2,6 +2,7 @@
 // calories vs the daily target. Server component. The aggregation is
 // ONE SQL query (group by date(...)) — JS fills empty days.
 import Link from "next/link";
+import { progressPct } from "@/components/progress-bar";
 import { getDailyTarget, getHistoryLastNDays, type DayTotals } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
@@ -42,8 +43,7 @@ function DayRow({
   target: number;
   highlight: boolean;
 }) {
-  const safeTarget = Math.max(target, 1);
-  const pct = Math.min(100, Math.round((day.calories / safeTarget) * 100));
+  const pct = progressPct(day.calories, target);
   const over = day.calories > target;
   const fill = day.calories === 0 ? "bg-gray-300" : over ? "bg-red-500" : "bg-green-500";
 

@@ -58,7 +58,7 @@
 - **Performance:** First Load JS ≤ 1.3 kB on the page hosting the quick-add form, ≤ 170 B on every other page (no rogue `'use client'`). History page issues exactly one aggregate SQL query — verified via `grep -c '.prepare(' …` returning 1.
 - **Accessibility:** WCAG 2.1 AA. Tap targets ≥ 44 × 44 px. `<label>` on every input. `role="progressbar"` with `aria-valuenow/min/max` on the target bar. `role="alert"` on validation errors. Focus rings via `focus-visible:ring-*`.
 - **Browser support:** modern evergreen + iOS Safari (mobile-first is the primary use case).
-- **Privacy:** no auth, no telemetry, no network. All data lives in `template/local.db`. Deleting that file deletes everything.
+- **Privacy / threat model:** no auth, no telemetry, no network. All data lives in `template/local.db`; deleting that file deletes everything. v1 ships server actions for create / re-log / delete / settings — all of them are publicly invokable on `localhost:3000`; the only barrier is same-origin browser convention. This is acceptable for a single-user local app on a personal machine. **If `cloud` mode is ever activated, every write path needs an auth gate or anon-write RLS policy** — the current schema grants anon `read` only.
 - **SQL safety:** zero string interpolation in `prepare(...)`. Verified via `grep -nE 'prepare\(.*\$\{|prepare\(.*\+'` returning zero hits.
 
 ## 6. Data model (high-level)

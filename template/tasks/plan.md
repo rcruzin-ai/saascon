@@ -198,4 +198,17 @@ Run a full smoke pass before invoking `/test`:
 
 Anything discovered mid-build that wasn't in the spec — capture here, don't silently expand scope.
 
-(none yet)
+### OOP-1 — History view rebases historical days against the *current* daily target
+
+Surfaced in `/review` (correctness axis, finding C2). `/history` reads `getDailyTarget()` once and applies that single value to every day's bar. If the user moves their target from 2000 → 2500, yesterday's 2100-cal day flips from red ("over") to green ("under") with no actual change in what they ate.
+
+Three options:
+- (a) Snapshot the active target on every `entries` row at log time (heaviest, but consistent with the FR-3 snapshot doctrine).
+- (b) Add a `target_history` table recording target changes with `effective_at`; the history aggregation joins for the per-day target.
+- (c) Accept current behavior as v1 — document that history bars are "vs current target" in the page copy.
+
+For v1 the spec didn't promise per-day target snapshots and the demo path doesn't surface this. Defer until the user actually changes their target on a populated DB and complains.
+
+### OOP-2 — Document the local-only no-auth security posture in SPEC.md
+
+Surfaced in `/review` (security axis, finding S3). All four server actions are publicly invokable on `localhost:3000` — by design (single-user local app), but the spec's Privacy section should call out that the only barrier is same-origin browser convention. If `cloud` mode is ever activated, every write path will need an auth gate or anon-write RLS policy; the schema currently grants anon `read` only.
