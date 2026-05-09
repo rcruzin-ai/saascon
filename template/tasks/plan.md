@@ -85,7 +85,7 @@ T-004, T-005, T-006 are **parallelizable in principle** after T-002 — but they
   - Mobile viewport (DevTools 375 px): totals + progress bar + first entry visible without scrolling. **State explicitly** that this is a JSX read (no headless browser available) and the wrapper is `max-w-md`, totals are above the entries list.
   - Per-slice gate: typecheck + lint + build green; commit `T-002: today read view + dev seed`.
 - **Dependencies:** T-001.
-- **Status:** ☐ todo
+- **Status:** ☑ done
 
 ### T-003 — Quick-add form (the one `'use client'` surface)
 

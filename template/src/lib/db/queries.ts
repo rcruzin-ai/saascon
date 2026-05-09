@@ -1,0 +1,79 @@
+// Product-level SQL for the calorie tracker. Uses prepared statements
+// directly against the cached SQLite connection — see sqlite.ts for why
+// we don't extend the tiny Db interface.
+//
+// Every value passes through a `?` placeholder. Identifiers are hard-coded.
+
+import { getSqliteConnection } from "./sqlite";
+
+export type EntryRow = {
+  id: string;
+  food_id: string | null;
+  name_snapshot: string;
+  calories_snapshot: number;
+  protein_snapshot: number | null;
+  carbs_snapshot: number | null;
+  fat_snapshot: number | null;
+  logged_at: string;
+};
+
+export type TodayTotals = {
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+};
+
+// SQLite stores datetime('now') as UTC strings of shape "YYYY-MM-DD HH:MM:SS"
+// (no trailing Z). We build [startUtc, endUtc) from the user's local "today"
+// boundaries so a single-user app shows the right day at the right time.
+export function todayUtcRange(now: Date = new Date()): { startUtc: string; endUtc: string } {
+  const startLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const endLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+  return { startUtc: toSqliteUtc(startLocal), endUtc: toSqliteUtc(endLocal) };
+}
+
+function toSqliteUtc(d: Date): string {
+  const yyyy = d.getUTCFullYear().toString().padStart(4, "0");
+  const mm = (d.getUTCMonth() + 1).toString().padStart(2, "0");
+  const dd = d.getUTCDate().toString().padStart(2, "0");
+  const hh = d.getUTCHours().toString().padStart(2, "0");
+  const mi = d.getUTCMinutes().toString().padStart(2, "0");
+  const ss = d.getUTCSeconds().toString().padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+
+export function getEntriesForToday(now: Date = new Date()): EntryRow[] {
+  const { startUtc, endUtc } = todayUtcRange(now);
+  return getSqliteConnection()
+    .prepare(
+      `select id, food_id, name_snapshot, calories_snapshot,
+              protein_snapshot, carbs_snapshot, fat_snapshot, logged_at
+       from entries
+       where logged_at >= ? and logged_at < ?
+       order by logged_at desc`,
+    )
+    .all(startUtc, endUtc) as EntryRow[];
+}
+
+export function getTodayTotals(now: Date = new Date()): TodayTotals {
+  const { startUtc, endUtc } = todayUtcRange(now);
+  const row = getSqliteConnection()
+    .prepare(
+      `select coalesce(sum(calories_snapshot), 0) as calories,
+              coalesce(sum(protein_snapshot),  0) as protein_g,
+              coalesce(sum(carbs_snapshot),    0) as carbs_g,
+              coalesce(sum(fat_snapshot),      0) as fat_g
+       from entries
+       where logged_at >= ? and logged_at < ?`,
+    )
+    .get(startUtc, endUtc) as TodayTotals;
+  return row;
+}
+
+export function getDailyTarget(): number {
+  const row = getSqliteConnection()
+    .prepare(`select daily_calorie_target from settings where id = 1`)
+    .get() as { daily_calorie_target: number } | undefined;
+  return row?.daily_calorie_target ?? 2000;
+}

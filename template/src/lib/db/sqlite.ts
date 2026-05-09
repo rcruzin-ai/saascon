@@ -24,6 +24,15 @@ function getConnection(): Database.Database {
   return cached;
 }
 
+// Expose the cached connection for product code that needs prepared
+// statements directly. The Db interface in ./index.ts is intentionally tiny
+// (countRows / selectRecent / insertOne) and doesn't fit aggregations,
+// joins, parameterized where-clauses, or upserts. Reach for this instead of
+// growing the interface.
+export function getSqliteConnection(): Database.Database {
+  return getConnection();
+}
+
 function applyPendingMigrations(conn: Database.Database): void {
   conn.exec(
     `create table if not exists schema_migrations (

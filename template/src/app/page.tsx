@@ -1,51 +1,144 @@
-// Home route — calorie-tracker landing UI lands in T-002.
-// For T-001 the DB health badge is the only render — proves the new schema
-// is reachable on a fresh clone.
+// Today view — the calorie-tracker home. Server-rendered: seed + read +
+// totals + progress bar + entries list. Quick-add form lands in T-003.
+import { ProgressBar } from "@/components/progress-bar";
 import { checkSupabaseHealth } from "@/lib/supabase/health";
+import { getDailyTarget, getEntriesForToday, getTodayTotals, type EntryRow } from "@/lib/db/queries";
+import { seedDev } from "@/lib/db/seed-dev";
+import { resolveDriver } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const health = await checkSupabaseHealth();
-  const driverLabel = health.driver === "sqlite" ? "local SQLite" : "Supabase";
+  if (resolveDriver() === "sqlite") seedDev();
 
-  const badge =
-    health.status === "connected"
-      ? {
-          dot: "bg-green-500",
-          label: `${driverLabel} connected`,
-          detail: `settings table reachable · ${health.rowCount} row${health.rowCount === 1 ? "" : "s"}`,
-        }
-      : health.status === "schema-missing"
-        ? {
-            dot: "bg-yellow-500",
-            label: `${driverLabel} reachable, schema not applied`,
-            detail:
-              health.driver === "sqlite"
-                ? "Restart npm run dev to re-run migrations from db/sqlite/migrations/."
-                : "Apply files in db/migrations/ to your Supabase project.",
-          }
-        : {
-            dot: "bg-red-500",
-            label: `${driverLabel} not configured`,
-            detail: health.reason,
-          };
+  const target = getDailyTarget();
+  const totals = getTodayTotals();
+  const entries = getEntriesForToday();
+  const health = await checkSupabaseHealth();
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6 p-8 text-center">
-      <h1 className="text-4xl font-bold tracking-tight">calorie tracker</h1>
-      <p className="text-sm text-gray-600 max-w-md">
-        Today view lands in T-002. The badge below confirms the new schema is reachable.
-      </p>
-      <div
-        className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm shadow-sm"
-        role="status"
-        aria-live="polite"
-      >
-        <span className={`inline-block h-2.5 w-2.5 rounded-full ${badge.dot}`} aria-hidden />
-        <span className="font-medium text-gray-900">{badge.label}</span>
-      </div>
-      <p className="text-xs text-gray-500 max-w-md">{badge.detail}</p>
+    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-4 md:p-6">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Today</h1>
+        <p className="text-sm text-gray-600">{formatTodayHeading()}</p>
+      </header>
+
+      <section className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <ProgressBar value={totals.calories} target={target} label="Calories" />
+        <MacroRow totals={totals} />
+      </section>
+
+      <section className="flex flex-col gap-2 rounded-2xl border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+        Quick-add coming next slice (T-003).
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+          Logged today
+        </h2>
+        {entries.length === 0 ? (
+          <p className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-500">
+            Nothing logged yet today.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {entries.map((e) => (
+              <EntryItem key={e.id} entry={e} />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <footer className="mt-auto pt-4 text-xs text-gray-500">
+        <HealthBadge health={health} />
+      </footer>
     </main>
+  );
+}
+
+function MacroRow({ totals }: { totals: { protein_g: number; carbs_g: number; fat_g: number } }) {
+  const cells: Array<{ label: string; value: number }> = [
+    { label: "Protein", value: totals.protein_g },
+    { label: "Carbs", value: totals.carbs_g },
+    { label: "Fat", value: totals.fat_g },
+  ];
+  return (
+    <dl className="grid grid-cols-3 gap-2 text-sm">
+      {cells.map((c) => (
+        <div key={c.label} className="flex flex-col rounded-xl bg-gray-50 p-2">
+          <dt className="text-xs uppercase tracking-wide text-gray-500">{c.label}</dt>
+          <dd className="tabular-nums text-base font-medium text-gray-900">
+            {Math.round(c.value)} g
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function EntryItem({ entry }: { entry: EntryRow }) {
+  return (
+    <li className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3">
+      <div className="flex flex-col">
+        <span className="text-sm font-medium text-gray-900">{entry.name_snapshot}</span>
+        <span className="text-xs text-gray-500">
+          <span className="tabular-nums">{formatLocalTime(entry.logged_at)}</span>
+          {" · "}
+          {macroLine(entry)}
+        </span>
+      </div>
+      <span className="tabular-nums text-sm font-semibold text-gray-900">
+        {entry.calories_snapshot} kcal
+      </span>
+    </li>
+  );
+}
+
+function macroLine(e: EntryRow): string {
+  const parts: string[] = [];
+  if (e.protein_snapshot != null) parts.push(`${Math.round(e.protein_snapshot)}P`);
+  if (e.carbs_snapshot != null) parts.push(`${Math.round(e.carbs_snapshot)}C`);
+  if (e.fat_snapshot != null) parts.push(`${Math.round(e.fat_snapshot)}F`);
+  return parts.join(" · ");
+}
+
+function formatLocalTime(sqliteUtc: string): string {
+  const iso = sqliteUtc.replace(" ", "T") + "Z";
+  const d = new Date(iso);
+  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatTodayHeading(): string {
+  return new Date().toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function HealthBadge({
+  health,
+}: {
+  health: Awaited<ReturnType<typeof checkSupabaseHealth>>;
+}) {
+  const driverLabel = health.driver === "sqlite" ? "local SQLite" : "Supabase";
+  const dot =
+    health.status === "connected"
+      ? "bg-green-500"
+      : health.status === "schema-missing"
+        ? "bg-yellow-500"
+        : "bg-red-500";
+  const label =
+    health.status === "connected"
+      ? `${driverLabel} connected · settings reachable · ${health.rowCount} row${health.rowCount === 1 ? "" : "s"}`
+      : health.status === "schema-missing"
+        ? `${driverLabel} reachable, schema not applied`
+        : `${driverLabel} not configured`;
+
+  return (
+    <div className="flex items-center gap-2" role="status" aria-live="polite">
+      <span className={`inline-block h-2 w-2 rounded-full ${dot}`} aria-hidden />
+      <span>{label}</span>
+    </div>
   );
 }
