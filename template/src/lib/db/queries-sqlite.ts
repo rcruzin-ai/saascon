@@ -10,26 +10,33 @@
 // Pair every function added here with a sibling in queries-supabase.ts
 // returning the same shape — the router in queries.ts dispatches by
 // driver, and the TypeScript signature catches drift.
-//
-// Example (replace with your real queries):
-//
-//   import { randomUUID } from "node:crypto";
-//   import { getSqliteConnection } from "./sqlite";
-//   import type { ExampleRow, ExampleInput } from "./queries-types";
-//
-//   export function listExamples(): ExampleRow[] {
-//     return getSqliteConnection()
-//       .prepare(`select id, label, created_at from examples order by created_at desc`)
-//       .all() as ExampleRow[];
-//   }
-//
-//   export function createExample(input: ExampleInput): { id: string } {
-//     const id = randomUUID();
-//     getSqliteConnection()
-//       .prepare(`insert into examples (id, label) values (?, ?)`)
-//       .run(id, input.label);
-//     return { id };
-//   }
 
-// (no queries yet — add yours here)
-export {};
+import { randomUUID } from "node:crypto";
+import { getSqliteConnection } from "./sqlite";
+import type { ExampleInput, ExampleRow } from "./queries-types";
+
+// ─────────────────────────────────────────────────────────────────────
+// Example placeholder queries — backed by the saascon `examples` table.
+// Delete these when you replace `examples` with your real entities.
+// ─────────────────────────────────────────────────────────────────────
+
+export function listExamples(): ExampleRow[] {
+  return getSqliteConnection()
+    .prepare(`select id, label, created_at from examples order by created_at desc`)
+    .all() as ExampleRow[];
+}
+
+export function createExample(input: ExampleInput): { id: string } {
+  const id = randomUUID();
+  getSqliteConnection()
+    .prepare(`insert into examples (id, label) values (?, ?)`)
+    .run(id, input.label);
+  return { id };
+}
+
+export function deleteExampleById(id: string): { changes: number } {
+  const result = getSqliteConnection()
+    .prepare(`delete from examples where id = ?`)
+    .run(id);
+  return { changes: result.changes };
+}

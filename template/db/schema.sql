@@ -36,6 +36,16 @@ create policy "anon read examples"
   to anon
   using (true);
 
+create policy "anon insert examples"
+  on examples for insert
+  to anon
+  with check (true);
+
+create policy "anon delete examples"
+  on examples for delete
+  to anon
+  using (true);
+
 -- ---------------------------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------------------------

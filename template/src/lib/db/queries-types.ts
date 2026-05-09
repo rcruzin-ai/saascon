@@ -3,22 +3,22 @@
 // code (and the router) can `import type` without pulling either driver
 // into its bundle.
 //
-// As you add product entities, add their types here. Both backend
-// modules then reference the same shape, so a query that exists on
-// SQLite must also exist on Supabase with the same return type — the
-// router's TypeScript signature will catch drift.
-//
-// Example (replace with your real entities):
-//
-//   export type ExampleRow = {
-//     id: string;
-//     label: string;
-//     created_at: string;
-//   };
-//
-//   export type ExampleInput = {
-//     label: string;
-//   };
+// The TypeScript signature on queries.ts catches drift: if the SQLite
+// and Supabase versions of a query disagree on return type, the file
+// fails to type-check.
 
-// (no types yet — add yours here)
-export {};
+// ─────────────────────────────────────────────────────────────────────
+// Example placeholder types — backed by the saascon `examples` table.
+// Delete these when you replace `examples` with your real entities;
+// add your real types in their place.
+// ─────────────────────────────────────────────────────────────────────
+
+export type ExampleRow = {
+  id: string;
+  label: string;
+  created_at: string;
+};
+
+export type ExampleInput = {
+  label: string;
+};

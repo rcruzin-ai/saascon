@@ -11,18 +11,13 @@
 //   3. Implement in ./queries-supabase.ts (async, supabase-js).
 //   4. Add the dispatch wrapper here.
 //
-// Example wrapper shape:
-//
-//   export async function listExamples() {
-//     return isCloud() ? supabaseImpl.listExamples() : sqliteImpl.listExamples();
-//   }
-//
 // The TypeScript signature catches drift: if the SQLite and Supabase
 // versions return different shapes, this file fails to type-check.
 
 import { resolveDriver } from "./index";
 import * as sqliteImpl from "./queries-sqlite";
 import * as supabaseImpl from "./queries-supabase";
+import type { ExampleInput } from "./queries-types";
 
 export type * from "./queries-types";
 
@@ -32,10 +27,18 @@ function isCloud(): boolean {
   return resolveDriver() === "supabase";
 }
 
-// Mark the imports as intentionally referenced even when no queries are
-// added yet — keeps the lint clean on a fresh template.
-void sqliteImpl;
-void supabaseImpl;
-void isCloud;
+// ─────────────────────────────────────────────────────────────────────
+// Example placeholder dispatchers. Delete when replacing `examples`.
+// ─────────────────────────────────────────────────────────────────────
 
-// (no queries yet — add yours here, dispatching via isCloud())
+export async function listExamples() {
+  return isCloud() ? supabaseImpl.listExamples() : sqliteImpl.listExamples();
+}
+
+export async function createExample(input: ExampleInput) {
+  return isCloud() ? supabaseImpl.createExample(input) : sqliteImpl.createExample(input);
+}
+
+export async function deleteExampleById(id: string) {
+  return isCloud() ? supabaseImpl.deleteExampleById(id) : sqliteImpl.deleteExampleById(id);
+}
