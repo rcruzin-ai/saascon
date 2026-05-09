@@ -1,9 +1,9 @@
--- Calorie tracker — SQLite schema (local mode).
--- Mirror of db/schema.sql adapted for SQLite. Notable differences:
---   * No pgcrypto / gen_random_uuid()  → app generates UUIDs in-process
---   * No timestamptz                   → ISO-8601 strings in TEXT columns
---   * No RLS                           → SQLite has no row-level security
---   * No PostgREST anon role           → reads/writes go through the app
+-- Calorie tracker — core schema. SQLite dialect.
+--
+-- Three tables:
+--   * foods    — library of distinct foods (unique by lower(name))
+--   * entries  — log events with snapshot copies of nutrition at log time
+--   * settings — singleton row holding daily_calorie_target
 
 create table if not exists foods (
   id          text primary key,

@@ -62,7 +62,7 @@ T-004, T-005, T-006 are **parallelizable in principle** after T-002 — but they
   - `cd template && rm -f local.db local.db-shm local.db-wal && npm run dev` → curl `http://localhost:3000` → grep response for `bg-green-500` and `connected`.
   - `npm run typecheck && npm run lint && npm run build` → all green.
 - **Dependencies:** none.
-- **Status:** ☐ todo
+- **Status:** ☑ done
 - **CHECKPOINT after this slice — pause for user review.**
 
 ### T-002 — Today read view + dev seed

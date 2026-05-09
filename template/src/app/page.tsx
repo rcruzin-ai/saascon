@@ -1,25 +1,11 @@
-// Home route — replace with your actual landing UI.
-// The DB health badge below is server-rendered so a fresh clone can see
-// connectivity at a glance. Delete it when you have real content.
+// Home route — calorie-tracker landing UI lands in T-002.
+// For T-001 the DB health badge is the only render — proves the new schema
+// is reachable on a fresh clone.
 import { checkSupabaseHealth } from "@/lib/supabase/health";
-import { getDb, resolveDriver } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-async function ensureSeed(): Promise<void> {
-  // In SQLite local mode, seed a single row on first ever request so the
-  // badge shows the rich "examples reachable · N rows" state. No-op for
-  // Supabase mode — that DB is seeded by the SQL Editor at setup time.
-  if (resolveDriver() !== "sqlite") return;
-  const db = getDb();
-  const result = await db.countRows("examples");
-  if ("count" in result && result.count === 0) {
-    await db.insertOne("examples", { label: "saascon local mode active" });
-  }
-}
-
 export default async function Home() {
-  await ensureSeed();
   const health = await checkSupabaseHealth();
   const driverLabel = health.driver === "sqlite" ? "local SQLite" : "Supabase";
 
@@ -28,7 +14,7 @@ export default async function Home() {
       ? {
           dot: "bg-green-500",
           label: `${driverLabel} connected`,
-          detail: `examples table reachable · ${health.rowCount} row${health.rowCount === 1 ? "" : "s"}`,
+          detail: `settings table reachable · ${health.rowCount} row${health.rowCount === 1 ? "" : "s"}`,
         }
       : health.status === "schema-missing"
         ? {
@@ -47,9 +33,9 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-6 p-8 text-center">
-      <h1 className="text-4xl font-bold tracking-tight">saascon</h1>
+      <h1 className="text-4xl font-bold tracking-tight">calorie tracker</h1>
       <p className="text-sm text-gray-600 max-w-md">
-        Replace this page with your real UI. Filled in during /build.
+        Today view lands in T-002. The badge below confirms the new schema is reachable.
       </p>
       <div
         className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm shadow-sm"

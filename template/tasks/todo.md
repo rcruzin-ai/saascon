@@ -2,20 +2,18 @@
 
 > Live checklist for the slice currently being built. Mirrors one task from `plan.md` at a time. Wipe and replace when moving to the next task.
 
-## Current task: T-001 — Schema swap: foods + entries + settings
+## Current task: T-001 — Schema swap (✅ done — awaiting checkpoint approval before T-002)
 
-- [ ] Write SQLite migration to drop `examples` (`<ts>__drop_examples.sql`)
-- [ ] Write SQLite migration to create foods/entries/settings + indexes + seed settings row (`<ts+1>__create_calorie_tracker.sql`)
-- [ ] Mirror both as Postgres migrations with RLS enabled + `anon` read policies
-- [ ] Rewrite `db/sqlite/schema.sql` and `db/schema.sql` to reflect the new tables
-- [ ] Update `src/app/page.tsx` `ensureSeed` + badge probe to point at `settings` (not `examples`)
-- [ ] Update `src/lib/supabase/health.ts` probe table from `examples` → `settings`
-- [ ] Update `docs/er-diagram.md` Mermaid: foods 1—∞ entries; settings standalone
-- [ ] `cd template && rm -f local.db local.db-shm local.db-wal && npm run dev` → DB badge green on first request
-- [ ] `cd template && npm run typecheck && npm run lint && npm run build` all green
-- [ ] Commit `T-001: schema for foods + entries + settings (drop examples)`
-- [ ] Tick T-001 status to ☑ in `tasks/plan.md`
-- [ ] **CHECKPOINT — pause for user review before T-002**
+- [x] SQLite migration to drop `examples` (`20260509064922__drop_examples.sql`)
+- [x] SQLite migration to create foods/entries/settings + indexes + seed settings row (`20260509064923__create_calorie_tracker.sql`)
+- [x] Postgres mirrors with RLS enabled + `anon` read policies on all three tables
+- [x] Rewrote `db/sqlite/schema.sql` and `db/schema.sql`
+- [x] Health probe target swapped from `examples` → `settings` in `src/lib/supabase/health.ts`
+- [x] Home page badge text updated; placeholder "saascon" copy replaced with "calorie tracker"
+- [x] `docs/er-diagram.md` updated (foods 1—∞ entries; settings standalone)
+- [x] Fresh DB → `npm run dev` → curl `/` returns `bg-green-500` + "settings table reachable · 1 row"
+- [x] `npm run typecheck && npm run lint && npm run build` all green; `/` First Load JS = 120 B
+- [x] Commit `T-001: schema for foods + entries + settings (drop examples)`
 
 ## Blockers / questions
 
