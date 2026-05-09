@@ -1,6 +1,7 @@
 // Today view — the calorie-tracker home. Server-rendered: seed + read +
 // totals + progress bar + entries list. Quick-add form lands in T-003.
 import { ProgressBar } from "@/components/progress-bar";
+import { QuickAddForm } from "@/components/quick-add-form";
 import { checkSupabaseHealth } from "@/lib/supabase/health";
 import { getDailyTarget, getEntriesForToday, getTodayTotals, type EntryRow } from "@/lib/db/queries";
 import { seedDev } from "@/lib/db/seed-dev";
@@ -28,9 +29,7 @@ export default async function Home() {
         <MacroRow totals={totals} />
       </section>
 
-      <section className="flex flex-col gap-2 rounded-2xl border border-dashed border-gray-300 p-4 text-sm text-gray-500">
-        Quick-add coming next slice (T-003).
-      </section>
+      <QuickAddForm />
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">

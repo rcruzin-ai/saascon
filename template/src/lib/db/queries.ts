@@ -4,6 +4,7 @@
 //
 // Every value passes through a `?` placeholder. Identifiers are hard-coded.
 
+import { randomUUID } from "node:crypto";
 import { getSqliteConnection } from "./sqlite";
 
 export type EntryRow = {
@@ -69,6 +70,61 @@ export function getTodayTotals(now: Date = new Date()): TodayTotals {
     )
     .get(startUtc, endUtc) as TodayTotals;
   return row;
+}
+
+// Upsert a food by case-insensitive name and log an entry in one transaction.
+// Catalog row keeps the latest macros (excluded.* on conflict). The new
+// entry snapshots those same values at log time — editing the food later
+// does NOT change historical totals (FR-3 in SPEC.md).
+export type LogInput = {
+  name: string;
+  calories: number;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+};
+
+export function upsertFoodAndLogEntry(input: LogInput): { foodId: string; entryId: string } {
+  const conn = getSqliteConnection();
+  const upsertFood = conn.prepare(
+    `insert into foods (id, name, calories, protein_g, carbs_g, fat_g)
+     values (?, ?, ?, ?, ?, ?)
+     on conflict (lower(name)) do update set
+       calories  = excluded.calories,
+       protein_g = excluded.protein_g,
+       carbs_g   = excluded.carbs_g,
+       fat_g     = excluded.fat_g
+     returning id`,
+  );
+  const insertEntry = conn.prepare(
+    `insert into entries (id, food_id, name_snapshot, calories_snapshot,
+                          protein_snapshot, carbs_snapshot, fat_snapshot)
+     values (?, ?, ?, ?, ?, ?, ?)
+     returning id`,
+  );
+
+  const tx = conn.transaction(() => {
+    const food = upsertFood.get(
+      randomUUID(),
+      input.name,
+      input.calories,
+      input.protein_g,
+      input.carbs_g,
+      input.fat_g,
+    ) as { id: string };
+    const entry = insertEntry.get(
+      randomUUID(),
+      food.id,
+      input.name,
+      input.calories,
+      input.protein_g,
+      input.carbs_g,
+      input.fat_g,
+    ) as { id: string };
+    return { foodId: food.id, entryId: entry.id };
+  });
+
+  return tx();
 }
 
 export function getDailyTarget(): number {

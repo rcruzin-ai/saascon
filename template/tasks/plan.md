@@ -107,7 +107,7 @@ T-004, T-005, T-006 are **parallelizable in principle** after T-002 — but they
   - DB-direct test: call `upsertFoodAndLogEntry()` from `node -e` via `tsx`, verify rows in both tables.
   - Per-slice gate; commit `T-003: quick-add form (one 'use client' surface)`.
 - **Dependencies:** T-002.
-- **Status:** ☐ todo
+- **Status:** ☑ done
 - **CHECKPOINT after this slice — riskiest UX moment, pause for user review.**
 
 ### T-004 — Foods library + re-log
