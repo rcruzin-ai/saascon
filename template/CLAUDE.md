@@ -267,7 +267,44 @@ The harness's cwd is typically the repo root, NOT `template/`. `npm` scripts and
 
 ---
 
-## 9. Verification — how to know a session went well
+## 9. When (and how) to add cloud-mode deployment
+
+Local SQLite is the saascon default. Cloud mode (Supabase + Vercel) is opt-in. The template ships **wired and ready** for both — the router pattern in `src/lib/db/queries.ts` dispatches every product query to either the SQLite or Supabase backend based on `resolveDriver()`. You don't need a separate "cloud port" slice; you implement each query on both sides as you add it.
+
+### Lifecycle gate
+
+The right time to flip a project to cloud:
+
+| Stage | Action |
+|---|---|
+| `/spec` | Note in §8 ("External dependencies") whether cloud is in scope for v1. If unsure, default to local-only. |
+| `/build` | Each product query gets implementations in **both** `queries-sqlite.ts` and `queries-supabase.ts`. Both before commit. |
+| `/test` | Local SQLite path is the test target. Cloud path is verified via manual smoke against a real Supabase project, not unit tests. |
+| `/review` | Confirm both backends have parity (same return shapes, same edge cases handled). Confirm RLS policies cover every write path on Supabase. |
+| `/ship` | Apply Postgres migrations to your Supabase project (SQL Editor or `pg` script). Push branch. Import to Vercel with Root Directory = `template/`. Set Preview-only env vars. |
+
+`template/docs/deploy-vercel.md` walks through the deploy specifics. Reference it from `/ship`, don't duplicate.
+
+### Atomicity caveats — document them per query
+
+Cloud-mode writes that need atomicity (`upsert + insert child`, `lookup + insert`, etc.) become **sequential supabase-js calls** — partial-failure window exists. Either:
+
+- Document the failure mode in a comment above the function and accept it (single-user demo, idempotent retries fine), or
+- Lift the work into a Postgres function and call via `.rpc()` for true atomicity
+
+The SQLite path keeps single-transaction atomicity unchanged.
+
+### When NOT to wire cloud queries upfront
+
+- Internal-only product (no cloud deploy planned) → write the SQLite side only, leave `queries-supabase.ts` empty
+- Throwaway prototype → same
+- Anything where the user explicitly says "Mode: local" in their `/spec`
+
+The unused `queries-supabase.ts` stub doesn't ship to the browser bundle (it's behind `resolveDriver()` dispatch), so leaving it empty has no runtime cost.
+
+---
+
+## 10. Verification — how to know a session went well
 
 By the end of a working session:
 

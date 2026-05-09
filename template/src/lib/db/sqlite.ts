@@ -12,16 +12,28 @@ import path from "node:path";
 import type { Db, Row } from "./index";
 
 let cached: Database.Database | undefined;
+let cachedPath: string | undefined;
 const MIGRATIONS_DIR = path.resolve(process.cwd(), "db/sqlite/migrations");
 
 function getConnection(): Database.Database {
-  if (cached) return cached;
   const dbPath = path.resolve(process.env.SAASCON_SQLITE_PATH ?? "./local.db");
+  if (cached && cachedPath === dbPath) return cached;
+  if (cached) cached.close();
   cached = new Database(dbPath, { readonly: false });
+  cachedPath = dbPath;
   cached.pragma("journal_mode = WAL");
   cached.pragma("foreign_keys = ON");
   applyPendingMigrations(cached);
   return cached;
+}
+
+// Expose the cached connection for product code that needs prepared
+// statements directly. The Db interface in ./index.ts is intentionally tiny
+// (countRows / selectRecent / insertOne) and doesn't fit aggregations,
+// joins, parameterized where-clauses, or upserts. Reach for this from
+// queries-sqlite.ts instead of growing the interface.
+export function getSqliteConnection(): Database.Database {
+  return getConnection();
 }
 
 function applyPendingMigrations(conn: Database.Database): void {
