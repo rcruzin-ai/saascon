@@ -26,7 +26,7 @@ export async function createEntry(
   });
   if (!parsed.ok) return { error: parsed.error, ok: false };
 
-  upsertFoodAndLogEntry(parsed.value);
+  await upsertFoodAndLogEntry(parsed.value);
   revalidatePath("/");
   return { error: null, ok: true };
 }
@@ -34,7 +34,7 @@ export async function createEntry(
 export async function relogFood(formData: FormData): Promise<void> {
   const foodId = formData.get("food_id");
   if (typeof foodId !== "string" || !/^[0-9a-f-]{36}$/i.test(foodId)) return;
-  relogFromFoodId(foodId);
+  await relogFromFoodId(foodId);
   revalidatePath("/");
   revalidatePath("/foods");
 }
@@ -42,14 +42,14 @@ export async function relogFood(formData: FormData): Promise<void> {
 export async function deleteEntry(formData: FormData): Promise<void> {
   const id = formData.get("id");
   if (typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id)) return;
-  deleteEntryById(id);
+  await deleteEntryById(id);
   revalidatePath("/");
 }
 
 export async function updateDailyTarget(formData: FormData): Promise<void> {
   const parsed = parseDailyTarget(formData.get("daily_calorie_target"));
   if (!parsed.ok) redirect("/settings?error=invalid");
-  setDailyTarget(parsed.value);
+  await setDailyTarget(parsed.value);
   revalidatePath("/");
   redirect("/settings?ok=1");
 }

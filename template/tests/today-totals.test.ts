@@ -18,42 +18,42 @@ describe("today totals — math + TZ boundary", () => {
 
   afterEach(() => cleanup());
 
-  it("sums calories + macros across today's entries", () => {
+  it("sums calories + macros across today's entries", async () => {
     plantEntry(dbPath, { name: "A", calories: 320, protein_g: 10, carbs_g: 60, fat_g: 5,  loggedAt: localDateAt(0, 8) });
     plantEntry(dbPath, { name: "B", calories: 150, protein_g: 17, carbs_g: 9,  fat_g: 4,  loggedAt: localDateAt(0, 12) });
     plantEntry(dbPath, { name: "C", calories: 480, protein_g: 32, carbs_g: 45, fat_g: 18, loggedAt: localDateAt(0, 18) });
 
-    const totals = queries.getTodayTotals();
+    const totals = await queries.getTodayTotals();
     expect(totals.calories).toBe(950);
     expect(totals.protein_g).toBe(59);
     expect(totals.carbs_g).toBe(114);
     expect(totals.fat_g).toBe(27);
   });
 
-  it("returns zero on an empty DB", () => {
-    expect(queries.getTodayTotals()).toEqual({ calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
+  it("returns zero on an empty DB", async () => {
+    expect(await queries.getTodayTotals()).toEqual({ calories: 0, protein_g: 0, carbs_g: 0, fat_g: 0 });
   });
 
-  it("treats missing macros as zero in the sum", () => {
+  it("treats missing macros as zero in the sum", async () => {
     plantEntry(dbPath, { name: "Apple", calories: 95, loggedAt: localDateAt(0, 12) });
-    const totals = queries.getTodayTotals();
+    const totals = await queries.getTodayTotals();
     expect(totals.calories).toBe(95);
     expect(totals.protein_g).toBe(0);
     expect(totals.carbs_g).toBe(0);
     expect(totals.fat_g).toBe(0);
   });
 
-  it("excludes entries from yesterday (server-local TZ boundary)", () => {
+  it("excludes entries from yesterday (server-local TZ boundary)", async () => {
     plantEntry(dbPath, { name: "today",    calories: 200, loggedAt: localDateAt(0, 12) });
     plantEntry(dbPath, { name: "25h-ago",  calories: 999, loggedAt: localDateAt(1, 11) });
-    expect(queries.getTodayTotals().calories).toBe(200);
-    expect(queries.getEntriesForToday().map((e) => e.name_snapshot)).toEqual(["today"]);
+    expect((await queries.getTodayTotals()).calories).toBe(200);
+    expect((await queries.getEntriesForToday()).map((e) => e.name_snapshot)).toEqual(["today"]);
   });
 
-  it("excludes entries from tomorrow (open-right interval)", () => {
+  it("excludes entries from tomorrow (open-right interval)", async () => {
     plantEntry(dbPath, { name: "today",    calories: 200, loggedAt: localDateAt(0, 12) });
     plantEntry(dbPath, { name: "tomorrow", calories: 300, loggedAt: localDateAt(-1, 1) });
-    expect(queries.getTodayTotals().calories).toBe(200);
+    expect((await queries.getTodayTotals()).calories).toBe(200);
   });
 });
 

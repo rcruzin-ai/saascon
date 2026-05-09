@@ -84,8 +84,10 @@ Three entities. Detailed schema in `db/sqlite/schema.sql` and `db/schema.sql`; E
 
 ## 8. External dependencies
 
-- **None.** SQLite via `better-sqlite3` against `./local.db`. No Supabase, no Vercel, no chart library, no date library, no form library.
+- **Local mode (default):** SQLite via `better-sqlite3` against `./local.db`. No Supabase, no Vercel, no chart library, no date library, no form library.
+- **Cloud mode (T-008):** Supabase (Postgres + RLS) + Vercel hosting. Activated by setting `NEXT_PUBLIC_SUPABASE_URL` + the two keys. `NEXT_PUBLIC_TIMEZONE` controls the today/history boundary.
 - Stack pinned per TEMPLATE.md §2: Next.js 15, React 19, TypeScript strict, Tailwind v4, npm.
+- `vitest` (devDependency) for the math tests added in `/test`.
 
 ## 9. Open questions — resolved
 

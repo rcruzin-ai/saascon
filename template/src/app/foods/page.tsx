@@ -8,8 +8,8 @@ import { listFoods, type FoodRow } from "@/lib/db/queries";
 
 export const dynamic = "force-dynamic";
 
-export default function FoodsPage() {
-  const foods = listFoods();
+export default async function FoodsPage() {
+  const foods = await listFoods();
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-4 md:p-6">

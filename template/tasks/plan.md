@@ -194,6 +194,39 @@ Run a full smoke pass before invoking `/test`:
 - [ ] `grep -nE 'prepare\(.*\$\{|prepare\(.*\+' template/src` → zero hits.
 - [ ] No committed `.claude/projects/` paths (`git log --stat --all -- .claude/projects/` → empty).
 
+### T-008 — Cloud-mode port (queries.ts ↔ Supabase + Vercel preview deploy)
+
+- **Goal:** make the calorie tracker actually deployable to Vercel by porting `queries.ts` to a router that picks SQLite or Supabase based on `resolveDriver()`. Local-mode behavior unchanged. Preview URL gets a real working demo.
+- **Why this surfaced:** v1 was scoped local-only. `queries.ts` calls `getSqliteConnection()` directly per playbook §4 — that's `better-sqlite3` writing to `./local.db`, which Vercel's read-only filesystem won't allow. The user (2026-05-09) asked for a Vercel preview; cloud mode needs a real query implementation, not just RLS policies.
+- **Files touched:**
+  - `template/db/migrations/<ts>__cloud_anon_write_policies.sql` (new) — anon insert/update/delete on foods/entries/settings.
+  - `template/db/migrations/<ts+1>__foods_name_lower_generated.sql` (new) — add `name_lower text generated always as (lower(name)) stored` to `foods` with a unique index, so Supabase `.upsert(..., { onConflict: 'name_lower' })` works.
+  - SQLite siblings of both: anon-policy migration is a no-op stub (no RLS in SQLite); name_lower migration is also a no-op (the existing `unique index foods_name_lower_idx on foods (lower(name))` already enables case-insensitive upserts via `on conflict (lower(name))`).
+  - `template/db/schema.sql` updated to reflect the policies + generated column.
+  - `template/src/lib/db/queries-sqlite.ts` (new) — current `queries.ts` content moved verbatim.
+  - `template/src/lib/db/queries-supabase.ts` (new) — Supabase implementations of the 9 functions.
+  - `template/src/lib/db/queries.ts` — slim router using `resolveDriver()`.
+  - `template/src/lib/db/tz.ts` (new) — single source of truth for the user TZ. Reads `NEXT_PUBLIC_TIMEZONE` env var; defaults to `"UTC"`.
+  - `template/docs/deploy-vercel.md` (new) — step-by-step deploy guide.
+- **TZ approach:** Cloud mode reads `NEXT_PUBLIC_TIMEZONE` (e.g. `Asia/Manila`) on the server and uses it to compute today/history boundaries. Local mode keeps server-local TZ behavior (single-user assumption holds).
+- **Atomicity caveats:**
+  - Cloud upsert+log is two sequential calls (`.upsert` food → `.insert` entry). Failure mode: food saved, entry not logged. User retries. Document.
+  - Cloud re-log is two sequential calls (lookup food → insert entry). Same caveat.
+  - SQLite path keeps single-transaction atomicity unchanged.
+- **Acceptance criteria:**
+  - [ ] `resolveDriver() === "sqlite"` route: every existing test + smoke behavior unchanged.
+  - [ ] `resolveDriver() === "supabase"` route: today view, quick-add, foods library, re-log, settings, history, delete all work end-to-end on a real Supabase project.
+  - [ ] No `'use client'` files added.
+  - [ ] Build sizes per page within 10% of current (`/` ≤ 1.5 kB, others ≤ 200 B).
+  - [ ] Local-mode tests still 44 passing.
+  - [ ] Preview Vercel URL demonstrates a working full loop.
+- **Verification:**
+  - Local: `rm template/local.db* && npm run dev` → today view still seeds + renders.
+  - Cloud: with `NEXT_PUBLIC_SUPABASE_URL` + keys set, `npm run dev` against the cloud DB works through the same UI.
+  - Push branch `preview/calorie-tracker` → Vercel imports → preview URL boots → manual smoke.
+- **Dependencies:** T-001 (schema base), T-007 (all features in place to port).
+- **Status:** ☑ done (local); pending Vercel deploy verification
+
 ## Out-of-plan work
 
 Anything discovered mid-build that wasn't in the spec — capture here, don't silently expand scope.

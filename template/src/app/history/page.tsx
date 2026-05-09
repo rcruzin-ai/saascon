@@ -7,9 +7,8 @@ import { getDailyTarget, getHistoryLastNDays, type DayTotals } from "@/lib/db/qu
 
 export const dynamic = "force-dynamic";
 
-export default function HistoryPage() {
-  const target = getDailyTarget();
-  const days = getHistoryLastNDays(7);
+export default async function HistoryPage() {
+  const [target, days] = await Promise.all([getDailyTarget(), getHistoryLastNDays(7)]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-4 md:p-6">

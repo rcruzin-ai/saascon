@@ -14,10 +14,12 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   if (resolveDriver() === "sqlite") seedDev();
 
-  const target = getDailyTarget();
-  const totals = getTodayTotals();
-  const entries = getEntriesForToday();
-  const health = await checkSupabaseHealth();
+  const [target, totals, entries, health] = await Promise.all([
+    getDailyTarget(),
+    getTodayTotals(),
+    getEntriesForToday(),
+    checkSupabaseHealth(),
+  ]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-4 md:p-6">

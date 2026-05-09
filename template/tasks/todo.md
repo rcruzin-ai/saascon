@@ -1,37 +1,33 @@
 # Active todo — calorie-tracker
 
-> v1 build complete — all 7 slices shipped. Ready for `/test` then `/review`.
+> v1 build complete + cloud-mode port shipped. Ready to push the preview branch.
 
-## T-007 — Delete entry (✅ done)
+## T-008 — Cloud-mode port (✅ done locally — pending Vercel deploy)
 
-- [x] `deleteEntryById(id)` in `queries.ts` — single parameterized DELETE; returns `{ changes }`.
-- [x] `deleteEntry(formData)` server action — UUID-shape sanity check, then `deleteEntryById`, then `revalidatePath("/")`. Missing/invalid ids are no-ops (no error UI, no crash).
-- [x] Per-entry icon-only delete button on `/`, plain `<form action={deleteEntry}>`, `aria-label="Delete <name>"`, `h-11 w-11` tap target, focus-visible ring.
-- [x] DB-direct: deleting a known entry → totals shrink by exactly that entry's calories; deleting non-existent id → `changes=0` no crash; re-deleting same id → `changes=0`.
-- [x] Smoke: `/` rendered three delete buttons each with the right `aria-label="Delete <name>"`; totals still 950 with seed.
-- [x] Build sizes: `/` = 1.31 kB First Load JS (unchanged from T-005 — delete buttons added zero client JS).
-- [x] `grep '"use client"' src/` returns 1 (still just the quick-add form).
-- [x] `grep -nE 'prepare\(.*\$\{|prepare\(.*\+'` zero hits.
-- [x] `npm run typecheck && npm run lint && npm run build` all green.
-- [x] Commit `T-007: delete entry`
+- [x] Migration: anon write policies (Postgres real, SQLite no-op stub)
+- [x] Migration: `foods.name_lower` generated column for Supabase `.upsert(onConflict: 'name_lower')` (Postgres real, SQLite no-op stub)
+- [x] `db/schema.sql` updated to reflect both
+- [x] `src/lib/db/tz.ts` — `NEXT_PUBLIC_TIMEZONE`-driven boundary
+- [x] `src/lib/db/queries-types.ts` — shared row + input types
+- [x] `src/lib/db/queries-sqlite.ts` — moved verbatim from old `queries.ts`
+- [x] `src/lib/db/queries-supabase.ts` — 9 functions implemented via `@supabase/supabase-js`
+- [x] `src/lib/db/queries.ts` — `resolveDriver()`-based async router; re-exports `todayUtcRange` for the test
+- [x] All consumer code updated to `await` queries calls (page, foods/page, history/page, settings/page, actions)
+- [x] Local-mode: 44 vitest tests still passing
+- [x] Local-mode: typecheck + lint + build green
+- [x] Local-mode: `rm local.db* && npm run dev` → green badge, today view shows 950 kcal seed, history page renders
+- [x] `docs/deploy-vercel.md` — step-by-step guide
+- [x] SPEC.md updated to note cloud-mode dependencies
+- [x] Commit `T-008: cloud-mode port — queries.ts router + Supabase impls`
+- [ ] **Push `preview/calorie-tracker` branch**
+- [ ] **User applies migrations in Supabase + sets Vercel env vars** (deploy-vercel.md walks through it)
+- [ ] **Verify preview URL works end-to-end**
 
-## Pre-`/test` checklist (from plan.md)
+## Out-of-plan discoveries during T-008
 
-- [x] Fresh DB → green badge in < 2 s
-- [x] Quick-add → entry on `/`
-- [x] Quick-add same name with different macros → 1 food row, latest macros, new entry uses new snapshot
-- [x] Re-log via `/foods` → new entry on `/`
-- [x] Update target on `/settings` → `/` progress bar denominator changes
-- [x] `/history` → 7 rows, today's row matches today's totals
-- [x] Delete entry on `/` → totals shrink
-- [x] typecheck + lint + build green
-- [x] zero string-interp prepare hits
-- [x] no `.claude/projects/` committed
+- **OOP-T8-1 — Cloud upsert + log is two sequential calls.** Failure mode "food saved, entry not logged" is documented in `queries-supabase.ts`. To get atomicity, lift the pair into a Postgres function and call via `.rpc()`. Not blocking for v1 demo.
+- **OOP-T8-2 — Cloud history bucketing is JS-side, single SELECT.** SQLite path uses `group by date(logged_at, 'localtime')` for one aggregate query. Supabase path fetches raw rows for the 7-day window and buckets in JS — still ONE round-trip, but moves work to the function. If the dataset grows to thousands of entries per week, switch to a `date_trunc` Postgres view.
 
-## Out-of-plan discoveries
+## Blockers / questions
 
-(none surfaced through the build)
-
-## Next
-
-`/test` (Vitest math + history aggregation) → `/review` (five-axis pass).
+(none — ready to push)

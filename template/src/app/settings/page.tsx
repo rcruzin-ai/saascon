@@ -11,7 +11,7 @@ type Props = { searchParams: Promise<{ ok?: string; error?: string }> };
 
 export default async function SettingsPage({ searchParams }: Props) {
   const params = await searchParams;
-  const current = getDailyTarget();
+  const current = await getDailyTarget();
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-4 md:p-6">

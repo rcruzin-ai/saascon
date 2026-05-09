@@ -24,6 +24,7 @@ create extension if not exists "pgcrypto";
 create table if not exists foods (
   id          uuid primary key default gen_random_uuid(),
   name        text not null check (length(trim(name)) between 1 and 80),
+  name_lower  text generated always as (lower(name)) stored,
   calories    integer not null check (calories between 0 and 10000),
   protein_g   numeric(6,2) check (protein_g is null or (protein_g between 0 and 1000)),
   carbs_g     numeric(6,2) check (carbs_g   is null or (carbs_g   between 0 and 1000)),
@@ -37,6 +38,17 @@ create policy "anon read foods"
   on foods for select
   to anon
   using (true);
+
+create policy "anon insert foods"
+  on foods for insert
+  to anon
+  with check (true);
+
+create policy "anon update foods"
+  on foods for update
+  to anon
+  using (true)
+  with check (true);
 
 create table if not exists entries (
   id                 uuid primary key default gen_random_uuid(),
@@ -56,6 +68,16 @@ create policy "anon read entries"
   to anon
   using (true);
 
+create policy "anon insert entries"
+  on entries for insert
+  to anon
+  with check (true);
+
+create policy "anon delete entries"
+  on entries for delete
+  to anon
+  using (true);
+
 create table if not exists settings (
   id                    integer primary key check (id = 1),
   daily_calorie_target  integer not null default 2000 check (daily_calorie_target between 500 and 10000)
@@ -68,6 +90,12 @@ create policy "anon read settings"
   to anon
   using (true);
 
+create policy "anon update settings"
+  on settings for update
+  to anon
+  using (true)
+  with check (true);
+
 -- Singleton settings row — every fresh database starts with a 2000 kcal target.
 insert into settings (id, daily_calorie_target) values (1, 2000)
   on conflict (id) do nothing;
@@ -77,6 +105,7 @@ insert into settings (id, daily_calorie_target) values (1, 2000)
 -- ---------------------------------------------------------------------------
 
 create unique index if not exists foods_name_lower_idx on foods (lower(name));
+create unique index if not exists foods_name_lower_col_idx on foods (name_lower);
 create index if not exists entries_logged_at_idx on entries (logged_at desc);
 
 -- ---------------------------------------------------------------------------
