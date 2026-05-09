@@ -126,7 +126,7 @@ T-004, T-005, T-006 are **parallelizable in principle** after T-002 — but they
   - [ ] Build size for `/foods` ≤ 170 B First Load JS.
 - **Verification:** seed 3 foods, click re-log on each, verify three new entries; per-slice gate; commit `T-004: foods library + re-log`.
 - **Dependencies:** T-003.
-- **Status:** ☐ todo
+- **Status:** ☑ done
 
 ### T-005 — Settings + target progress bar live update
 

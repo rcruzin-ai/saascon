@@ -127,6 +127,44 @@ export function upsertFoodAndLogEntry(input: LogInput): { foodId: string; entryI
   return tx();
 }
 
+export type FoodRow = {
+  id: string;
+  name: string;
+  calories: number;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_g: number | null;
+  created_at: string;
+};
+
+export function listFoods(): FoodRow[] {
+  return getSqliteConnection()
+    .prepare(
+      `select id, name, calories, protein_g, carbs_g, fat_g, created_at
+       from foods
+       order by created_at desc, name asc`,
+    )
+    .all() as FoodRow[];
+}
+
+// Re-log an existing food: snapshot its current catalog values onto a new
+// entry. One INSERT, no extra SELECT — the values come from a sub-select
+// keyed on the foreign-key id, so a missing food just yields zero rows.
+export function relogFromFoodId(foodId: string): { entryId: string } | null {
+  const conn = getSqliteConnection();
+  const newId = randomUUID();
+  const row = conn
+    .prepare(
+      `insert into entries (id, food_id, name_snapshot, calories_snapshot,
+                            protein_snapshot, carbs_snapshot, fat_snapshot)
+       select ?, id, name, calories, protein_g, carbs_g, fat_g
+       from foods where id = ?
+       returning id`,
+    )
+    .get(newId, foodId) as { id: string } | undefined;
+  return row ? { entryId: row.id } : null;
+}
+
 export function getDailyTarget(): number {
   const row = getSqliteConnection()
     .prepare(`select daily_calorie_target from settings where id = 1`)

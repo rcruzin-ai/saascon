@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { parseQuickAdd } from "./quick-add-parse";
-import { upsertFoodAndLogEntry } from "@/lib/db/queries";
+import { relogFromFoodId, upsertFoodAndLogEntry } from "@/lib/db/queries";
 
 export type QuickAddState = { error: string | null; ok: boolean };
 
@@ -22,4 +22,12 @@ export async function createEntry(
   upsertFoodAndLogEntry(parsed.value);
   revalidatePath("/");
   return { error: null, ok: true };
+}
+
+export async function relogFood(formData: FormData): Promise<void> {
+  const foodId = formData.get("food_id");
+  if (typeof foodId !== "string" || !/^[0-9a-f-]{36}$/i.test(foodId)) return;
+  relogFromFoodId(foodId);
+  revalidatePath("/");
+  revalidatePath("/foods");
 }

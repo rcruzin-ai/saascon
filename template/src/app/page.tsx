@@ -1,5 +1,6 @@
 // Today view — the calorie-tracker home. Server-rendered: seed + read +
 // totals + progress bar + entries list. Quick-add form lands in T-003.
+import Link from "next/link";
 import { ProgressBar } from "@/components/progress-bar";
 import { QuickAddForm } from "@/components/quick-add-form";
 import { checkSupabaseHealth } from "@/lib/supabase/health";
@@ -19,9 +20,17 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-4 md:p-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Today</h1>
-        <p className="text-sm text-gray-600">{formatTodayHeading()}</p>
+      <header className="flex items-end justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Today</h1>
+          <p className="text-sm text-gray-600">{formatTodayHeading()}</p>
+        </div>
+        <Link
+          href="/foods"
+          className="text-sm font-medium text-gray-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+        >
+          Foods →
+        </Link>
       </header>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
