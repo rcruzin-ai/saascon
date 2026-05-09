@@ -33,6 +33,12 @@ export default async function Home() {
             Foods →
           </Link>
           <Link
+            href="/history"
+            className="font-medium text-gray-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+          >
+            History →
+          </Link>
+          <Link
             href="/settings"
             className="font-medium text-gray-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
           >

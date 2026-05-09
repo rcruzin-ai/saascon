@@ -2,19 +2,19 @@
 
 > Live checklist for the slice currently being built. Mirrors one task from `plan.md` at a time. Wipe and replace when moving to the next task.
 
-## Current task: T-005 — Settings + daily target (✅ done)
+## Current task: T-006 — History view + 7-day CSS bars (✅ done)
 
-- [x] `setDailyTarget(value)` added to `queries.ts`
-- [x] `updateDailyTarget(formData)` server action with boundary validation (string of digits, 500–10000); redirect to `?error=invalid` on bad input, `?ok=1` on success; `revalidatePath("/")` before redirect.
-- [x] `/settings` route — server component, single-knob form (no `'use client'`), inline `role="alert"` / `role="status"` messages from query params, `defaultValue={current}` so the input shows the current target.
-- [x] `/` nav now has both "Foods →" and "Settings →" links stacked.
-- [x] DB-direct: `setDailyTarget(2500)` → `getDailyTarget()` returns 2500; another `setDailyTarget(1800)` → 1800; `/`'s `aria-valuemax` follows.
-- [x] Validation parity: 12 cases pass (happy 2000/500/10000, below min, zero, above max, letters, empty, decimal, negative, null, whitespace).
-- [x] Build sizes: `/settings` = 165 B First Load JS (≤ 170 B target); `/foods` = 165 B; `/` = 1.31 kB.
+- [x] `getHistoryLastNDays(days, now)` in `queries.ts` — ONE aggregate query (`group by date(logged_at, 'localtime')`) + JS fill of empty days.
+- [x] `/history` route — server component, 7 rows newest-first, today highlighted, CSS bar (gray/green/red) per day with `role="progressbar"` and `aria-valuenow/min/max`.
+- [x] `/` nav now stacks: Foods → / History → / Settings →.
+- [x] Hand-math: planted entries on today (500), today-2 (800), today-5 (1200), and today-8 (out of window). Got back exactly 7 rows with `[500, 0, 800, 0, 0, 1200, 0]`. Sum = 2500. Out-of-window entry NOT included.
+- [x] **ONE aggregate query** verified: `awk` over `getHistoryLastNDays` body → `grep -c '.prepare('` returns **1**.
+- [x] Build sizes: `/history` = 167 B First Load JS (≤ 170 B target).
 - [x] `grep '"use client"' src/` returns 1 (still just the quick-add form).
 - [x] `grep -nE 'prepare\(.*\$\{|prepare\(.*\+'` zero hits.
 - [x] `npm run typecheck && npm run lint && npm run build` all green.
-- [x] Commit `T-005: settings + daily target`
+- [x] Smoke: `/history` rendered with 7 progressbars, each showing the right `aria-valuenow` per day, all sharing `aria-valuemax="2000"`.
+- [x] Commit `T-006: history view + 7-day CSS bars`
 
 ## Blockers / questions
 

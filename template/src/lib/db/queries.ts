@@ -165,6 +165,71 @@ export function relogFromFoodId(foodId: string): { entryId: string } | null {
   return row ? { entryId: row.id } : null;
 }
 
+export type DayTotals = {
+  date: string;
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+};
+
+// Last `days` days (inclusive of today). ONE aggregate query against
+// entries; JS fills any missing days with zeros so the view always
+// renders a fixed-width window.
+//
+// `date(logged_at, 'localtime')` groups by the user's local day, matching
+// the today-view's TZ behavior in todayUtcRange().
+export function getHistoryLastNDays(days: number, now: Date = new Date()): DayTotals[] {
+  const cutoff = startOfLocalDay(addDays(now, -(days - 1)));
+  const cutoffIso = toLocalDateString(cutoff);
+
+  const rows = getSqliteConnection()
+    .prepare(
+      `select date(logged_at, 'localtime')          as d,
+              sum(calories_snapshot)                as cal,
+              sum(coalesce(protein_snapshot, 0))    as prot,
+              sum(coalesce(carbs_snapshot, 0))      as carb,
+              sum(coalesce(fat_snapshot, 0))        as fat
+       from entries
+       where date(logged_at, 'localtime') >= ?
+       group by d`,
+    )
+    .all(cutoffIso) as Array<{ d: string; cal: number; prot: number; carb: number; fat: number }>;
+
+  const byDate = new Map(rows.map((r) => [r.d, r]));
+  const result: DayTotals[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = addDays(now, -i);
+    const key = toLocalDateString(d);
+    const r = byDate.get(key);
+    result.push({
+      date: key,
+      calories: r?.cal ?? 0,
+      protein_g: r?.prot ?? 0,
+      carbs_g: r?.carb ?? 0,
+      fat_g: r?.fat ?? 0,
+    });
+  }
+  return result;
+}
+
+function startOfLocalDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+}
+
+function addDays(d: Date, days: number): Date {
+  const r = new Date(d);
+  r.setDate(r.getDate() + days);
+  return r;
+}
+
+function toLocalDateString(d: Date): string {
+  const y = d.getFullYear().toString().padStart(4, "0");
+  const m = (d.getMonth() + 1).toString().padStart(2, "0");
+  const day = d.getDate().toString().padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function getDailyTarget(): number {
   const row = getSqliteConnection()
     .prepare(`select daily_calorie_target from settings where id = 1`)

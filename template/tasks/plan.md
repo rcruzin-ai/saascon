@@ -161,7 +161,7 @@ T-004, T-005, T-006 are **parallelizable in principle** after T-002 — but they
   - Hand-math: seed entries across 3 distinct days, sum calories per day on paper, compare to rendered values.
   - Per-slice gate; commit `T-006: history view + CSS bars`.
 - **Dependencies:** T-001 (schema), T-002 (queries module). Doesn't need T-003/T-004/T-005, but ships after them for nav cohesion.
-- **Status:** ☐ todo
+- **Status:** ☑ done
 
 ### T-007 — Delete entry
 
