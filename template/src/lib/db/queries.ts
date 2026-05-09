@@ -171,3 +171,9 @@ export function getDailyTarget(): number {
     .get() as { daily_calorie_target: number } | undefined;
   return row?.daily_calorie_target ?? 2000;
 }
+
+export function setDailyTarget(value: number): void {
+  getSqliteConnection()
+    .prepare(`update settings set daily_calorie_target = ? where id = 1`)
+    .run(value);
+}

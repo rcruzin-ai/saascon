@@ -143,7 +143,7 @@ T-004, T-005, T-006 are **parallelizable in principle** after T-002 — but they
   - [ ] Build size for `/settings` ≤ 170 B First Load JS.
 - **Verification:** per-slice gate; commit `T-005: settings + daily target`.
 - **Dependencies:** T-002 (the progress bar exists). Independent of T-003 / T-004.
-- **Status:** ☐ todo
+- **Status:** ☑ done
 
 ### T-006 — History view (last 7 days + CSS bars)
 

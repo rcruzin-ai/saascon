@@ -25,12 +25,20 @@ export default async function Home() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">Today</h1>
           <p className="text-sm text-gray-600">{formatTodayHeading()}</p>
         </div>
-        <Link
-          href="/foods"
-          className="text-sm font-medium text-gray-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
-        >
-          Foods →
-        </Link>
+        <nav className="flex flex-col items-end gap-1 text-sm">
+          <Link
+            href="/foods"
+            className="font-medium text-gray-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+          >
+            Foods →
+          </Link>
+          <Link
+            href="/settings"
+            className="font-medium text-gray-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+          >
+            Settings →
+          </Link>
+        </nav>
       </header>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">

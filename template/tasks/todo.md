@@ -2,19 +2,19 @@
 
 > Live checklist for the slice currently being built. Mirrors one task from `plan.md` at a time. Wipe and replace when moving to the next task.
 
-## Current task: T-004 — Foods library + re-log (✅ done)
+## Current task: T-005 — Settings + daily target (✅ done)
 
-- [x] `listFoods()` and `relogFromFoodId(foodId)` in `queries.ts`. Re-log is one INSERT with a `select … from foods where id = ?` source — no extra SELECT round-trip.
-- [x] `relogFood(formData)` server action with UUID-shape sanity check at the boundary; `revalidatePath("/")` and `revalidatePath("/foods")` on success.
-- [x] `/foods` route — server component, one row per food, plain `<form action={relogFood}>` per row (no client JS), `aria-label="Log <name> again"` on every button.
-- [x] Nav link "Foods →" added to `/`; `← Today` back link on `/foods`.
-- [x] Build sizes: `/foods` = 163 B First Load JS (≤ 170 B target); `/` = 1.31 kB.
-- [x] `npm run typecheck && npm run lint && npm run build` all green.
-- [x] DB-direct: list returns 3 foods; re-log returns `{ entryId }`; missing food id → null; snapshots preserve old + new values across catalog updates; `lower(name)='oatmeal'` count stays 1 across re-logs.
+- [x] `setDailyTarget(value)` added to `queries.ts`
+- [x] `updateDailyTarget(formData)` server action with boundary validation (string of digits, 500–10000); redirect to `?error=invalid` on bad input, `?ok=1` on success; `revalidatePath("/")` before redirect.
+- [x] `/settings` route — server component, single-knob form (no `'use client'`), inline `role="alert"` / `role="status"` messages from query params, `defaultValue={current}` so the input shows the current target.
+- [x] `/` nav now has both "Foods →" and "Settings →" links stacked.
+- [x] DB-direct: `setDailyTarget(2500)` → `getDailyTarget()` returns 2500; another `setDailyTarget(1800)` → 1800; `/`'s `aria-valuemax` follows.
+- [x] Validation parity: 12 cases pass (happy 2000/500/10000, below min, zero, above max, letters, empty, decimal, negative, null, whitespace).
+- [x] Build sizes: `/settings` = 165 B First Load JS (≤ 170 B target); `/foods` = 165 B; `/` = 1.31 kB.
 - [x] `grep '"use client"' src/` returns 1 (still just the quick-add form).
-- [x] `grep -nE 'prepare\(.*\$\{|prepare\(.*\+'` over db + actions returns zero.
-- [x] Smoke: `/foods` rendered with all seed foods + re-log buttons; `/` shows "Foods →" nav link.
-- [x] Commit `T-004: foods library + re-log`
+- [x] `grep -nE 'prepare\(.*\$\{|prepare\(.*\+'` zero hits.
+- [x] `npm run typecheck && npm run lint && npm run build` all green.
+- [x] Commit `T-005: settings + daily target`
 
 ## Blockers / questions
 
