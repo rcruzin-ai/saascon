@@ -12,12 +12,15 @@ import path from "node:path";
 import type { Db, Row } from "./index";
 
 let cached: Database.Database | undefined;
+let cachedPath: string | undefined;
 const MIGRATIONS_DIR = path.resolve(process.cwd(), "db/sqlite/migrations");
 
 function getConnection(): Database.Database {
-  if (cached) return cached;
   const dbPath = path.resolve(process.env.SAASCON_SQLITE_PATH ?? "./local.db");
+  if (cached && cachedPath === dbPath) return cached;
+  if (cached) cached.close();
   cached = new Database(dbPath, { readonly: false });
+  cachedPath = dbPath;
   cached.pragma("journal_mode = WAL");
   cached.pragma("foreign_keys = ON");
   applyPendingMigrations(cached);

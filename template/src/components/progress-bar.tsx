@@ -7,9 +7,14 @@ type Props = {
   label: string;
 };
 
-export function ProgressBar({ value, target, label }: Props) {
+// Exported for unit tests.
+export function progressPct(value: number, target: number): number {
   const safeTarget = Math.max(target, 1);
-  const pct = Math.min(100, Math.round((value / safeTarget) * 100));
+  return Math.min(100, Math.round((value / safeTarget) * 100));
+}
+
+export function ProgressBar({ value, target, label }: Props) {
+  const pct = progressPct(value, target);
   const over = value > target;
   const fill = over ? "bg-red-500" : "bg-green-500";
 
