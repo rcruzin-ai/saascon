@@ -3,7 +3,12 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { parseQuickAdd } from "./quick-add-parse";
-import { relogFromFoodId, setDailyTarget, upsertFoodAndLogEntry } from "@/lib/db/queries";
+import {
+  deleteEntryById,
+  relogFromFoodId,
+  setDailyTarget,
+  upsertFoodAndLogEntry,
+} from "@/lib/db/queries";
 
 export type QuickAddState = { error: string | null; ok: boolean };
 
@@ -31,6 +36,13 @@ export async function relogFood(formData: FormData): Promise<void> {
   relogFromFoodId(foodId);
   revalidatePath("/");
   revalidatePath("/foods");
+}
+
+export async function deleteEntry(formData: FormData): Promise<void> {
+  const id = formData.get("id");
+  if (typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id)) return;
+  deleteEntryById(id);
+  revalidatePath("/");
 }
 
 export async function updateDailyTarget(formData: FormData): Promise<void> {

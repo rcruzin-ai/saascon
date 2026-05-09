@@ -177,7 +177,7 @@ T-004, T-005, T-006 are **parallelizable in principle** after T-002 — but they
   - [ ] Build size for `/` unchanged from T-005 (still ≤ 1.3 kB — only the quick-add form is client).
 - **Verification:** seed, delete, observe totals decrement; per-slice gate; commit `T-007: delete entry`.
 - **Dependencies:** T-003 (entries are written there).
-- **Status:** ☐ todo
+- **Status:** ☑ done
 
 ## After T-007 — pre-`/test` checklist
 

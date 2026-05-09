@@ -1,25 +1,37 @@
 # Active todo — calorie-tracker
 
-> Live checklist for the slice currently being built. Mirrors one task from `plan.md` at a time. Wipe and replace when moving to the next task.
+> v1 build complete — all 7 slices shipped. Ready for `/test` then `/review`.
 
-## Current task: T-006 — History view + 7-day CSS bars (✅ done)
+## T-007 — Delete entry (✅ done)
 
-- [x] `getHistoryLastNDays(days, now)` in `queries.ts` — ONE aggregate query (`group by date(logged_at, 'localtime')`) + JS fill of empty days.
-- [x] `/history` route — server component, 7 rows newest-first, today highlighted, CSS bar (gray/green/red) per day with `role="progressbar"` and `aria-valuenow/min/max`.
-- [x] `/` nav now stacks: Foods → / History → / Settings →.
-- [x] Hand-math: planted entries on today (500), today-2 (800), today-5 (1200), and today-8 (out of window). Got back exactly 7 rows with `[500, 0, 800, 0, 0, 1200, 0]`. Sum = 2500. Out-of-window entry NOT included.
-- [x] **ONE aggregate query** verified: `awk` over `getHistoryLastNDays` body → `grep -c '.prepare('` returns **1**.
-- [x] Build sizes: `/history` = 167 B First Load JS (≤ 170 B target).
+- [x] `deleteEntryById(id)` in `queries.ts` — single parameterized DELETE; returns `{ changes }`.
+- [x] `deleteEntry(formData)` server action — UUID-shape sanity check, then `deleteEntryById`, then `revalidatePath("/")`. Missing/invalid ids are no-ops (no error UI, no crash).
+- [x] Per-entry icon-only delete button on `/`, plain `<form action={deleteEntry}>`, `aria-label="Delete <name>"`, `h-11 w-11` tap target, focus-visible ring.
+- [x] DB-direct: deleting a known entry → totals shrink by exactly that entry's calories; deleting non-existent id → `changes=0` no crash; re-deleting same id → `changes=0`.
+- [x] Smoke: `/` rendered three delete buttons each with the right `aria-label="Delete <name>"`; totals still 950 with seed.
+- [x] Build sizes: `/` = 1.31 kB First Load JS (unchanged from T-005 — delete buttons added zero client JS).
 - [x] `grep '"use client"' src/` returns 1 (still just the quick-add form).
 - [x] `grep -nE 'prepare\(.*\$\{|prepare\(.*\+'` zero hits.
 - [x] `npm run typecheck && npm run lint && npm run build` all green.
-- [x] Smoke: `/history` rendered with 7 progressbars, each showing the right `aria-valuenow` per day, all sharing `aria-valuemax="2000"`.
-- [x] Commit `T-006: history view + 7-day CSS bars`
+- [x] Commit `T-007: delete entry`
 
-## Blockers / questions
+## Pre-`/test` checklist (from plan.md)
 
-(none)
+- [x] Fresh DB → green badge in < 2 s
+- [x] Quick-add → entry on `/`
+- [x] Quick-add same name with different macros → 1 food row, latest macros, new entry uses new snapshot
+- [x] Re-log via `/foods` → new entry on `/`
+- [x] Update target on `/settings` → `/` progress bar denominator changes
+- [x] `/history` → 7 rows, today's row matches today's totals
+- [x] Delete entry on `/` → totals shrink
+- [x] typecheck + lint + build green
+- [x] zero string-interp prepare hits
+- [x] no `.claude/projects/` committed
 
 ## Out-of-plan discoveries
 
-(none yet)
+(none surfaced through the build)
+
+## Next
+
+`/test` (Vitest math + history aggregation) → `/review` (five-axis pass).

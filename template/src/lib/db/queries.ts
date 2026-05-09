@@ -242,3 +242,10 @@ export function setDailyTarget(value: number): void {
     .prepare(`update settings set daily_calorie_target = ? where id = 1`)
     .run(value);
 }
+
+export function deleteEntryById(id: string): { changes: number } {
+  const result = getSqliteConnection()
+    .prepare(`delete from entries where id = ?`)
+    .run(id);
+  return { changes: result.changes };
+}

@@ -1,6 +1,7 @@
 // Today view — the calorie-tracker home. Server-rendered: seed + read +
 // totals + progress bar + entries list. Quick-add form lands in T-003.
 import Link from "next/link";
+import { deleteEntry } from "@/app/actions";
 import { ProgressBar } from "@/components/progress-bar";
 import { QuickAddForm } from "@/components/quick-add-form";
 import { checkSupabaseHealth } from "@/lib/supabase/health";
@@ -101,17 +102,28 @@ function MacroRow({ totals }: { totals: { protein_g: number; carbs_g: number; fa
 function EntryItem({ entry }: { entry: EntryRow }) {
   return (
     <li className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3">
-      <div className="flex flex-col">
-        <span className="text-sm font-medium text-gray-900">{entry.name_snapshot}</span>
+      <div className="flex min-w-0 flex-col">
+        <span className="truncate text-sm font-medium text-gray-900">{entry.name_snapshot}</span>
         <span className="text-xs text-gray-500">
           <span className="tabular-nums">{formatLocalTime(entry.logged_at)}</span>
-          {" · "}
-          {macroLine(entry)}
+          {macroLine(entry) ? ` · ${macroLine(entry)}` : ""}
         </span>
       </div>
-      <span className="tabular-nums text-sm font-semibold text-gray-900">
-        {entry.calories_snapshot} kcal
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="tabular-nums text-sm font-semibold text-gray-900">
+          {entry.calories_snapshot} kcal
+        </span>
+        <form action={deleteEntry}>
+          <input type="hidden" name="id" value={entry.id} />
+          <button
+            type="submit"
+            aria-label={`Delete ${entry.name_snapshot}`}
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900"
+          >
+            <span aria-hidden className="text-lg leading-none">×</span>
+          </button>
+        </form>
+      </div>
     </li>
   );
 }
