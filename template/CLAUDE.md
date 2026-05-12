@@ -304,7 +304,52 @@ The unused `queries-supabase.ts` stub doesn't ship to the browser bundle (it's b
 
 ---
 
-## 10. Verification — how to know a session went well
+## 10. Optional AI features — Groq Cloud (demo-ready)
+
+The template ships **Groq-ready** for any product that wants AI features during the demo (chat assistant, voice transcription, image understanding). Config lives in `template/.env.ai.example`. Default state is **off** — no Groq calls run unless a feature explicitly imports the client. Add it only when a current slice needs it.
+
+### When to wire AI in
+
+| Signal | Action |
+|---|---|
+| `/spec` mentions "AI", "chat", "transcribe", "voice note", "scan a photo of", or similar | Note in SPEC §8 ("External dependencies") that Groq is required. Plan a dedicated AI slice. |
+| User says "could the demo do X with AI?" mid-build | Capture as `OOP-N` in `tasks/todo.md` — don't silently add it to the current slice. |
+| Brief doesn't mention AI | Leave it out. Don't add a "while we're here" AI feature. |
+
+### Setup (one-time per project)
+
+1. `cat template/.env.ai.example >> template/.env`
+2. Paste a Groq key from https://console.groq.com/keys into `GROQ_CLOUD_API_KEY=`
+3. Defaults are verified-working — don't override unless you have a reason.
+
+### Models available (Groq-only — no other providers)
+
+| Capability | Model | Endpoint | Notes |
+|---|---|---|---|
+| Chat | `openai/gpt-oss-120b` | `/openai/v1/chat/completions` | **Reasoning model.** Set `max_tokens ≥ 200` or visible content comes back empty (tokens get spent on internal reasoning first). |
+| Voice (STT) | `whisper-large-v3-turbo` | `/openai/v1/audio/transcriptions` | Multipart upload (`file=@path.wav`). |
+| Image (vision input) | `meta-llama/llama-4-scout-17b-16e-instruct` | `/openai/v1/chat/completions` | Content blocks: `[{type:"text"}, {type:"image_url"}]`. Accepts URLs or `data:image/...;base64,...`. |
+
+**Groq does NOT offer image generation.** If the brief asks for text-to-image, surface this as a blocker in `/spec` — don't silently swap in OpenAI/Replicate.
+
+### Implementation pattern
+
+When an AI slice lands, follow the same single-leaf rule as other client code:
+
+- Server Action calls Groq via `fetch` against the OpenAI-compatible endpoints (no extra SDK needed — saves a dep).
+- Read model IDs from `process.env.GROQ_CHAT_MODEL` etc. — never hardcode in the call site, so the `.env` stays the source of truth.
+- For chat: stream only if the UI needs token-by-token rendering. For demo-grade features, non-streaming is simpler and shows up fine.
+- For voice/image: accept the file at the form boundary, forward to Groq, persist the *result* (transcript, description) to the DB — don't store raw audio/images in SQLite. If they need to be kept, use the filesystem (`public/uploads/` is git-ignored).
+
+### Demo-day caveats
+
+- Free-tier rate limits are per-model (see `.env.ai.example` for the numbers). A live demo with rapid clicks can hit RPM ceilings — mention this if the product expects bursty usage.
+- The Groq key is a secret. Same rules as `SUPABASE_SERVICE_ROLE_KEY`: server-only, never in `NEXT_PUBLIC_*`, never logged.
+- Reasoning-model output (`gpt-oss-120b`) carries a `reasoning` field on the message. Render only `content`; never expose `reasoning` to users.
+
+---
+
+## 11. Verification — how to know a session went well
 
 By the end of a working session:
 
